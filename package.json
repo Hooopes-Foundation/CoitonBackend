@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "export NODE_TLS_REJECT_UNAUTHORIZED='0' && export NODE_ENV=production && node server.js",
+    "start": "export NODE_TLS_REJECT_UNAUTHORIZED='0' && export NODE_ENV=development && node server.js",
     "dev": "export NODE_ENV=development && nodemon server.js",
     "test": "export NODE_ENV=test && node server.js"
   },
