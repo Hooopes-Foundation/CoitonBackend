@@ -1,10 +1,12 @@
+require("dotenv").config();
+
 const { mint_token } = require("../contract/contract.controller");
 const { CheckBadRequest } = require("../../validations");
 const { MessageResponse } = require("../../helpers");
 const PAYSTACK_SEC_KEY = process.env.PAYSTACK_SEC_KEY;
 
 const paystack = require("paystack")(PAYSTACK_SEC_KEY);
-exports.buy_token = async (req, res, next) => {
+const buy_token = async (req, res, next) => {
   const errors = CheckBadRequest(req, res, next);
   if (errors) return next(errors);
   const { receipt, address } = req.body;
@@ -14,7 +16,7 @@ exports.buy_token = async (req, res, next) => {
     if (tx.status) {
       const amount = Number(tx.data.amount) / 100;
 
-      const cal = Math.round((Number(amount) / 1000 - 0) * (10 ^ 6));
+      const cal = Math.round(amount * Math.pow(10, 6));
 
       const mint_tx = await mint_token(address, cal);
 
@@ -43,3 +45,5 @@ exports.buy_token = async (req, res, next) => {
     );
   }
 };
+
+buy_token().catch(console.log);
