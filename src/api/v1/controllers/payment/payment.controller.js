@@ -16,7 +16,7 @@ exports.buy_token = async (req, res, next) => {
     if (tx.status) {
       const amount = Number(tx.data.amount) / 100;
 
-      const cal = Math.round(amount * Math.pow(10, 6));
+      const cal = Math.round(amount * Math.pow(10, 18));
 
       const mint_tx = await mint_token(address, cal);
 
