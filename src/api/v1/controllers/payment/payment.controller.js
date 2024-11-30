@@ -6,7 +6,7 @@ const { MessageResponse } = require("../../helpers");
 const PAYSTACK_SEC_KEY = process.env.PAYSTACK_SEC_KEY;
 
 const paystack = require("paystack")(PAYSTACK_SEC_KEY);
-const buy_token = async (req, res, next) => {
+exports.buy_token = async (req, res, next) => {
   const errors = CheckBadRequest(req, res, next);
   if (errors) return next(errors);
   const { receipt, address } = req.body;
@@ -45,5 +45,3 @@ const buy_token = async (req, res, next) => {
     );
   }
 };
-
-buy_token().catch(console.log);
