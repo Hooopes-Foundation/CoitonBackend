@@ -3,36 +3,25 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes) {
-    await queryInterface.createTable("users", {
+    await queryInterface.createTable("proposal_votes", {
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true,
       },
-      username: {
+      proposal: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      voter: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-
-      firstname: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-
-      lastname: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-
-      email: {
-        type: DataTypes.STRING,
+      vote: {
+        type: DataTypes.BOOLEAN,
         allowNull: false,
-      },
-
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
+        defaultValue: true,
       },
       createdAt: {
         allowNull: false,
@@ -53,7 +42,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("users");
+    await queryInterface.dropTable("proposal_votes");
 
     /**
      * Add reverting commands here.

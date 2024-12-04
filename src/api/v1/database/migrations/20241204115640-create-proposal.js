@@ -3,36 +3,44 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes) {
-    await queryInterface.createTable("users", {
+    await queryInterface.createTable("proposals", {
       id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true,
       },
-      username: {
+      initiator: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-
-      firstname: {
+      title: {
         type: DataTypes.STRING,
+        allowNull: false,
+      },
+      active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+      implemented: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+
+      index: {
+        type: DataTypes.TEXT,
         allowNull: true,
-      },
-
-      lastname: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-
-      email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
+        get() {
+          // Custom getter for parsing JSON when retrieved from the database
+          const jsonString = this.getDataValue("index");
+          return jsonString ? JSON.parse(jsonString) : null;
+        },
+        set(value) {
+          // Custom setter for stringifying JSON when stored in the database
+          this.setDataValue("index", value ? JSON.stringify(value) : null);
+        },
       },
       createdAt: {
         allowNull: false,
@@ -53,7 +61,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("users");
+    await queryInterface.dropTable("proposals");
 
     /**
      * Add reverting commands here.

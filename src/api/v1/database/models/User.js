@@ -48,39 +48,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
-      level: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-
-      profile_picture: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      nationality: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      telegram_user_name: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      x_profile_link: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      wallet: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-
-      verified: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
-      },
-
       email: {
         type: DataTypes.STRING,
         allowNull: false,
