@@ -3,10 +3,7 @@ const { MessageResponse } = require("../../helpers");
 const { Proposal, ProposalVote } = require("../../database/models");
 
 const csv = require("csv-parser");
-const {
-  get_proposal_initiator,
-  get_dao_members,
-} = require("../contract/contract.controller");
+const { get_dao_members } = require("../contract/contract.controller");
 const { sendMail } = require("../../helpers/email/EmailConfig");
 
 exports.handleProposalUpload = async (req, res, next) => {
@@ -102,6 +99,12 @@ exports.get_proposals = async (req, res, next) => {
       }
       const proposals = await Proposal.findAll({
         where,
+        include: [
+          {
+            model: ProposalVote,
+            as: "votes", // Use the alias defined in the association
+          },
+        ],
       });
       MessageResponse.successResponse(res, "Data fetched", 201, proposals);
       return;

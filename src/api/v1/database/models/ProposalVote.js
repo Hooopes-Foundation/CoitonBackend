@@ -9,6 +9,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.belongsTo(models.Proposal, {
+        foreignKey: "proposal", // Reference field in the Vote model
+      });
     }
   }
   ProposalVote.init(
