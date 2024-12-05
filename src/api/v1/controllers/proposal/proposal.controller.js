@@ -37,17 +37,56 @@ exports.handleProposalUpload = async (req, res, next) => {
       })
       .on("end", async () => {
         try {
-          await Proposal.create({
-            initiator,
-            title,
-            index: JSON.stringify(csvData),
-          });
-          MessageResponse.successResponse(
-            res,
-            "CSV processed successfully",
-            201,
-            csvData
-          );
+          if (csvData.length) {
+            const INDEX_KEYS = [
+              "Region",
+              "Index Value (Current)",
+              "% Change (Month-over-Month)",
+              "% Change (Year-over-Year)",
+              "Median Price ($)",
+              "Trend",
+            ];
+
+            const keys = Object.keys(csvData[0]);
+            let success = true;
+            for (let i = 0; i < keys.length; i++) {
+              const element = keys[i];
+              const check = INDEX_KEYS.find(
+                (fd) => fd.toLowerCase() === element.trim().toLowerCase()
+              );
+              if (!check) {
+                success = false;
+                break;
+              }
+            }
+
+            if (success) {
+              await Proposal.create({
+                initiator,
+                title,
+                index: JSON.stringify(csvData),
+              });
+
+              MessageResponse.successResponse(
+                res,
+                "CSV processed successfully",
+                201,
+                csvData
+              );
+            } else {
+              MessageResponse.errorResponse(
+                res,
+                "File does not meet format standard",
+                400,
+                { standard_format: INDEX_KEYS, provided_format: keys }
+              );
+            }
+
+            return;
+          }
+
+          MessageResponse.errorResponse(res, "Empty file content", 400, {});
+          return;
         } catch (error) {
           console.log(error);
           MessageResponse.errorResponse(
