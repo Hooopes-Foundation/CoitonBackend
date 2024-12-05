@@ -46,6 +46,20 @@ const mint_token = async (address, amount) => {
   }
 };
 
+const store_real_estate_index = async (data) => {
+  try {
+    const contract = get_coiton_contract_instance();
+    if (!contract) {
+      throw new Error("Contract instance not set");
+    }
+    const tx = await contract.store_realestate_index(data);
+    return { success: true, tx };
+  } catch (error) {
+    console.log(error);
+    return { success: false, tx: {} };
+  }
+};
+
 const get_proposal_initiator = async (address) => {
   try {
     const contract = get_coiton_contract_instance();
@@ -78,4 +92,5 @@ module.exports = {
   mint_token,
   get_proposal_initiator,
   get_dao_members,
+  store_real_estate_index,
 };

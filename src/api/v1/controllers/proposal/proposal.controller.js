@@ -3,8 +3,20 @@ const { MessageResponse } = require("../../helpers");
 const { Proposal, ProposalVote } = require("../../database/models");
 
 const csv = require("csv-parser");
-const { get_dao_members } = require("../contract/contract.controller");
+const {
+  get_dao_members,
+  store_real_estate_index,
+} = require("../contract/contract.controller");
 const { sendMail } = require("../../helpers/email/EmailConfig");
+
+const INDEX_KEYS_MAPPING = {
+  region: "Region",
+  index_value: "Index Value (Current)",
+  month_over_month_change: "% Change (Month-over-Month)",
+  year_over_year_change: "% Change (Year-over-Year)",
+  median_price: "Median Price ($)",
+  trend: "Trend",
+};
 
 exports.handleProposalUpload = async (req, res, next) => {
   const errors = CheckBadRequest(req, res, next);
@@ -38,17 +50,9 @@ exports.handleProposalUpload = async (req, res, next) => {
       .on("end", async () => {
         try {
           if (csvData.length) {
-            const INDEX_KEYS = [
-              "Region",
-              "Index Value (Current)",
-              "% Change (Month-over-Month)",
-              "% Change (Year-over-Year)",
-              "Median Price ($)",
-              "Trend",
-            ];
-
             const keys = Object.keys(csvData[0]);
             let success = true;
+            const INDEX_KEYS = Object.values(INDEX_KEYS_MAPPING);
             for (let i = 0; i < keys.length; i++) {
               const element = keys[i];
               const check = INDEX_KEYS.find(
@@ -179,8 +183,15 @@ exports.vote = async (req, res, next) => {
       MessageResponse.errorResponse(res, "ALREADY_VOTED", 400, {});
       return;
     }
-
-    const vote = await ProposalVote.create(req.body);
+    const dao_members = await get_dao_members();
+    if (dao_members.success) {
+      MessageResponse.errorResponse(res, "Contract Error", 500, {});
+      return;
+    }
+    const vote = await ProposalVote.create({
+      ...req.body,
+      proposal: proposal_id,
+    });
 
     const votes = await ProposalVote.findAll({
       where: {
@@ -205,49 +216,67 @@ exports.vote = async (req, res, next) => {
       },
     });
 
-    const dao_members = await get_dao_members();
     if (down_votes >= 3) {
-      if (dao_members.success) {
-        const emails = dao_members.response
-          .filter((ft) => ft.is_dao && ft.approved)
-          .map((mp) => mp.details.email)
-          .filter((ft) => Boolean(ft));
+      const emails = dao_members.response
+        .filter((ft) => ft.is_dao && ft.approved)
+        .map((mp) => mp.details.email)
+        .filter((ft) => Boolean(ft));
 
-        if (emails.length) {
-          sendMail(
-            emails.join(","),
-            ``,
-            disapproved_proposal_email_construct({
-              title: proposal.title,
-              total_votes: up_votes + down_votes,
-              for: up_votes,
-              against: down_votes,
-            })`Announcement: Proposal "${proposal.title}" Not Approved`
-          );
-        }
+      if (emails.length) {
+        sendMail(
+          emails.join(","),
+          ``,
+          disapproved_proposal_email_construct({
+            title: proposal.title,
+            total_votes: up_votes + down_votes,
+            for: up_votes,
+            against: down_votes,
+          })`Announcement: Proposal "${proposal.title}" Not Approved`
+        );
       }
       await proposal.update({ active: false, implemented: false });
     }
 
     if (up_votes >= 3) {
-      if (dao_members.success) {
-        const emails = dao_members.response
-          .filter((ft) => ft.is_dao && ft.approved)
-          .map((mp) => mp.details.email)
-          .filter((ft) => Boolean(ft));
+      let data = [];
+      const parsed_indices = JSON.parse(proposal.index);
+      for (let i = 0; i < parsed_indices.length; i++) {
+        const real_estate_index = parsed_indices[i];
+        const construct = {
+          region: real_estate_index[INDEX_KEYS_MAPPING["region"]],
+          index_value: real_estate_index[INDEX_KEYS_MAPPING["index_value"]],
+          month_over_month_change:
+            real_estate_index[INDEX_KEYS_MAPPING["month_over_month_change"]],
+          year_over_year_change:
+            real_estate_index[INDEX_KEYS_MAPPING["year_over_year_change"]],
+          median_price: real_estate_index[INDEX_KEYS_MAPPING["median_price"]],
+          trend: real_estate_index[INDEX_KEYS_MAPPING["trend"]],
+        };
 
-        if (emails.length) {
-          sendMail(
-            emails.join(","),
-            ``,
-            approved_proposal_email_construct({
-              title: proposal.title,
-              total_votes: up_votes + down_votes,
-              for: up_votes,
-              against: down_votes,
-            })`Announcement: Proposal "${proposal.title}" Approved`
-          );
-        }
+        data.push({
+          index: construct,
+          proposer: proposal.initiator,
+          timestamp: 0,
+        });
+      }
+
+      await store_real_estate_index(data);
+      const emails = dao_members.response
+        .filter((ft) => ft.is_dao && ft.approved)
+        .map((mp) => mp.details.email)
+        .filter((ft) => Boolean(ft));
+
+      if (emails.length) {
+        sendMail(
+          emails.join(","),
+          ``,
+          approved_proposal_email_construct({
+            title: proposal.title,
+            total_votes: up_votes + down_votes,
+            for: up_votes,
+            against: down_votes,
+          })`Announcement: Proposal "${proposal.title}" Approved`
+        );
       }
       await proposal.update({ active: false, implemented: true });
     }
