@@ -23,7 +23,7 @@ const upload = multer({
 router.post(
   "/",
   upload.single("doc"),
-  // ProposalValidator.initiate_proposal,
+  ProposalValidator.initiate_proposal,
   ProposalController.handleProposalUpload
 );
 router.get("/", ProposalController.get_proposals);
